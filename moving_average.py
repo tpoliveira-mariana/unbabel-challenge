@@ -1,13 +1,18 @@
 import click, json, pandas as pd
 
+def is_valid_event(event : dict):
+    return event and 'event_name' in event and \
+            event['event_name'] == 'translation_delivered' and \
+            'timestamp' in event and 'duration' in event
+
 def get_clean_data(file : str):   
     with open(file) as f:
         clean = []
         for line in f:
-            line = line.rstrip()    # to ignore empty lines
+            line = line.rstrip()    # ignore empty lines
             if line:
                 datapoint = json.loads(line)
-                if datapoint and 'timestamp' in datapoint and 'duration' in datapoint:
+                if is_valid_event(datapoint):
                     # round timestamp to next minute 
                     timestamp = pd.to_datetime(datapoint['timestamp']).ceil(freq='T') 
                     duration = pd.to_numeric(datapoint['duration'])
@@ -19,7 +24,6 @@ def enhance_data(data : pd.DataFrame):
     data['delta_ts'] = data['timestamp'].diff().dt.total_seconds() / 60 
     data['delta_ts'].fillna(0, inplace=True)
     data['delta_ts'] = data['delta_ts'].astype(int)
-    print(data)
 
 def build_result(prev_date : str, mean_duration : float):
 
@@ -29,7 +33,7 @@ def build_result(prev_date : str, mean_duration : float):
     return { 'date': str(next_date), 'average_delivery_time': round(mean_duration, ndigits)}
 
 def moving_average(data : pd.DataFrame, period : int):
-    delta = sum(data['delta_ts']) + 1
+    steps = sum(data['delta_ts']) + 1
     results = [
         {
             'date': str(data['timestamp'].iloc[0] - pd.Timedelta(minutes=1)), 
@@ -38,10 +42,10 @@ def moving_average(data : pd.DataFrame, period : int):
 
     # compute  moving average
     lower = 0
-    lowers = list(data['delta_ts'].cumsum())
-    uppers = [] + lowers
+    lowers = list(data['delta_ts'].cumsum()) # remove from to_avg
+    uppers = [] + lowers    # add to to_avg
     to_avg = []
-    for upper in range(delta): 
+    for upper in range(steps): 
         if upper > period - 1:
             # window shifts at every time step after period
             lower += 1
@@ -69,6 +73,7 @@ def output_result(results : list):
         for result in results:
             json.dump(result, f)
             f.write('\n')       
+
 
 @click.command()
 @click.option("--input_file", type=click.Path(exists=True), required=True, 

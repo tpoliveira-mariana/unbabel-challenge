@@ -1,86 +1,61 @@
-# Backend Engineering Challenge
+# Project Goal
 
+Develop a simple command line application that parses a stream of events and produces an aggregated output (in the form of the `average_delivery_time.json` file). In this case, we're interested in calculating, for every minute, a moving average of the translation delivery time for the last X minutes.
 
-Welcome to our Engineering Challenge repository 🖖
+# Requirements
 
-If you found this repository it probably means that you are participating in our recruitment process. Thank you for your time and energy. If that's not the case please take a look at our [openings](https://unbabel.com/careers/) and apply!
+This project was done using:
 
-Please fork this repo before you start working on the challenge, read it careful and take your time and think about the solution. Also, please fork this repository because we will evaluate the code on the fork.
+	Python 3.11.4
 
-This is an opportunity for us both to work together and get to know each other in a more technical way. If you have any questions please open and issue and we'll reach out to help.
+# Build
 
-Good luck!
+To build the CLI application run one of the following commands:
 
-## Challenge Scenario
+	pip install --editable .
 
-At Unbabel we deal with a lot of translation data. One of the metrics we use for our clients' SLAs is the delivery time of a translation. 
+	python -m pip install --editable .
 
-In the context of this problem, and to keep things simple, our translation flow is going to be modeled as only one event.
+To ensure the command succeeded, ensure the creation of the directory `./maverage.egg-info/`.
 
-### *translation_delivered*
+# Run
 
-Example:
+To test the `maverage` CLI application with the input file `./events/events.json` with a window size of `10`, run the command as follows:
 
-```json
-{
-	"timestamp": "2018-12-26 18:12:19.903159",
-	"translation_id": "5aa5b2f39f7254a75aa4",
-	"source_language": "en",
-	"target_language": "fr",
-	"client_name": "airliberty",
-	"event_name": "translation_delivered",
-	"duration": 20,
-	"nr_words": 100
-}
-```
+	maverage --input_file event/events.json --window_size 10
 
-## Challenge Objective
+# Test
 
-Your mission is to build a simple command line application that parses a stream of events and produces an aggregated output. In this case, we're interested in calculating, for every minute, a moving average of the translation delivery time for the last X minutes.
+# Program Overview
 
-If we want to count, for each minute, the moving average delivery time of all translations for the past 10 minutes we would call your application like (feel free to name it anything you like!).
+### Packages
 
-	unbabel_cli --input_file events.json --window_size 10
-	
-The input file format would be something like:
+In this project, the following Python packages are used:
 
-	{"timestamp": "2018-12-26 18:11:08.509654","translation_id": "5aa5b2f39f7254a75aa5","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 20}
-	{"timestamp": "2018-12-26 18:15:19.903159","translation_id": "5aa5b2f39f7254a75aa4","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 31}
-	{"timestamp": "2018-12-26 18:23:19.903159","translation_id": "5aa5b2f39f7254a75bb3","source_language": "en","target_language": "fr","client_name": "taxi-eats","event_name": "translation_delivered","nr_words": 100, "duration": 54}
++ Click - To define the command and its options;
++ json - To read the events from the input file;
++ Pandas - To easily save, clean, and process the events. 
 
-Assume that the lines in the input are ordered by the `timestamp` key, from lower (oldest) to higher values, just like in the example input above.
+### Logic
 
-The output file would be something in the following format.
+The `maverage` command, linked to the function `process_events`, is executed in four steps:
 
-```
-{"date": "2018-12-26 18:11:00", "average_delivery_time": 0}
-{"date": "2018-12-26 18:12:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:13:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:14:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:15:00", "average_delivery_time": 20}
-{"date": "2018-12-26 18:16:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:17:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:18:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:19:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:20:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:21:00", "average_delivery_time": 25.5}
-{"date": "2018-12-26 18:22:00", "average_delivery_time": 31}
-{"date": "2018-12-26 18:23:00", "average_delivery_time": 31}
-{"date": "2018-12-26 18:24:00", "average_delivery_time": 42.5}
-```
+1. Load and clean events - `get_clean_data()`
+2. Process the events - `enhance_data()`
+3. Compute moving average - `moving_average()`
+4. Output - `output_result()`
 
-#### Notes
+In step 1, the input file is read one line at a time (empty ones are ignored) and only the `timestamp` and `duration` of **valid events** are added to the clean dataset. An event is _valid_ if it is of the type `translation_delivered` and if it contains the two properties mentioned above. It is assumed that, whenever present, these values are properly formatted.
 
-Before jumping right into implementation we advise you to think about the solution first. We will evaluate, not only if your solution works but also the following aspects:
+Moreover, the timestamps that are kept are not the ones receives as input.
+In fact, unless an event happened at an exact minute (eg. `"2018-12-26 18:25:00.000000"`) its `timestamp` is rounded to the next one:
+`18:11:08.509654` -> `18:12:00.000000`
 
-+ Simple and easy to read code. Remember that [simple is not easy](https://www.infoq.com/presentations/Simple-Made-Easy)
-+ Comment your code. The easier it is to understand the complex parts, the faster and more positive the feedback will be
-+ Consider the optimizations you can do, given the order of the input lines
-+ Include a README.md that briefly describes how to build and run your code, as well as how to **test it**
-+ Be consistent in your code. 
+Next, the column `delta_ts` is added to the clean dataset. It contains the difference (in minutes) between each timestamp and the one that preceeds it.
+This information is of use step 3.
 
-Feel free to, in your solution, include some your considerations while doing this challenge. We want you to solve this challenge in the language you feel most comfortable with. Our machines run Python (3.7.x or higher) or Go (1.16.x or higher). If you are thinking of using any other programming language please reach out to us first 🙏.
+Unsurprisingly, `moving_average()` computes the moving average for the `duration` field of the events received as input. I am considering that whenever no events were registered in a window, the `average_delivery_time` for the corresponding minute is `0`.
 
-Also, if you have any problem please **open an issue**. 
+In addition, the moving average is always computed up to the minute of the last event, even if a window size that is greater than time range of the events received is provided.
 
-Good luck and may the force be with you
+Finaly, the list with the resulting datapoints is written to the file `average_delivery_time.json`.
