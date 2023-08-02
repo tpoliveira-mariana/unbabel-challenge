@@ -63,11 +63,11 @@ To ensure the CLI application behaves as described above, one can use the exampl
 
 1. Basic behaviour with the `events.json`, provided in the problem description;
 2. When no events are registered in a specific time window, the `average_delivery_time` is `0`;
-3. Moving average computed only until for the interval `[ minT-1, maxT]`, despite the window being longer than the time range between the first and the last event;
+3. Moving average computed only until for the interval `[minT-1, maxT]`, despite the window being longer than the time range between the first and the last event;
 4. Support events over different days;
 5. Support multiple events in the same minute.
 
-Next some test examples are provided. Feel free to go over each one, and to try your own inputs! 
+Next some test examples are provided. Feel free to go over each one, and to try your own inputs!
 
 #### Test 1
 
