@@ -25,11 +25,11 @@ def enhance_data(data):
     data['timestep'].fillna(0, inplace=True)
     data['timestep'] = data['timestep'].astype(int).cumsum()
 
+    # aggregate rows with same timestamp
     agg_functions = {'timestamp': 'first', 'duration': 'mean', 'timestep': 'first'}
     return data.groupby(data['timestamp']).aggregate(agg_functions)
 
 def build_result(prev_date, mean_duration):
-
     next_date = pd.Timestamp(prev_date) + pd.Timedelta(minutes=1)
     ndigits = None if mean_duration % 1 == 0 else 1
 
