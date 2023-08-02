@@ -1,11 +1,11 @@
 import click, json, pandas as pd
 
-def is_valid_event(event : dict):
+def is_valid_event(event):
     return event and 'event_name' in event and \
             event['event_name'] == 'translation_delivered' and \
             'timestamp' in event and 'duration' in event
 
-def get_clean_data(file : str):   
+def get_clean_data(file):   
     with open(file) as f:
         clean = []
         for line in f:
@@ -20,7 +20,7 @@ def get_clean_data(file : str):
 
         return pd.DataFrame(clean)
     
-def enhance_data(data : pd.DataFrame):
+def enhance_data(data):
     data['timestep'] = data['timestamp'].diff().dt.total_seconds() / 60 
     data['timestep'].fillna(0, inplace=True)
     data['timestep'] = data['timestep'].astype(int).cumsum()
@@ -28,14 +28,14 @@ def enhance_data(data : pd.DataFrame):
     agg_functions = {'timestamp': 'first', 'duration': 'mean', 'timestep': 'first'}
     return data.groupby(data['timestamp']).aggregate(agg_functions)
 
-def build_result(prev_date : str, mean_duration : float):
+def build_result(prev_date, mean_duration):
 
     next_date = pd.Timestamp(prev_date) + pd.Timedelta(minutes=1)
     ndigits = None if mean_duration % 1 == 0 else 1
 
     return { 'date': str(next_date), 'average_delivery_time': round(mean_duration, ndigits)}
 
-def moving_average(data : pd.DataFrame, period : int):
+def moving_average(data, period):
     steps = data['timestep'].iloc[-1] + 1
     results = [
         {
@@ -61,7 +61,6 @@ def moving_average(data : pd.DataFrame, period : int):
             # upper bound of window reached new event
             to_avg.append(data['duration'].iloc[moments.index(upper)])
 
-
         # prevent cases with no registered events in window
         average = 0
         if len(to_avg):
@@ -71,7 +70,7 @@ def moving_average(data : pd.DataFrame, period : int):
 
     return results
 
-def output_result(results : list):
+def output_result(results):
     with open('average_delivery_time.json', 'w') as f:
         for result in results:
             json.dump(result, f)
@@ -88,5 +87,4 @@ def process_events(input_file, window_size):
     data = enhance_data(data)
     result = moving_average(data, window_size)
     output_result(result)
-    
     
