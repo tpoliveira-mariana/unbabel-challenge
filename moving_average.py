@@ -25,6 +25,9 @@ def enhance_data(data : pd.DataFrame):
     data['timestep'].fillna(0, inplace=True)
     data['timestep'] = data['timestep'].astype(int).cumsum()
 
+    agg_functions = {'timestamp': 'first', 'duration': 'mean', 'timestep': 'first'}
+    return data.groupby(data['timestamp']).aggregate(agg_functions)
+
 def build_result(prev_date : str, mean_duration : float):
 
     next_date = pd.Timestamp(prev_date) + pd.Timedelta(minutes=1)
@@ -82,7 +85,7 @@ def output_result(results : list):
               help="Size (in minutes) of the sliding window")
 def process_events(input_file, window_size):
     data = get_clean_data(input_file)
-    enhance_data(data)
+    data = enhance_data(data)
     result = moving_average(data, window_size)
     output_result(result)
     
