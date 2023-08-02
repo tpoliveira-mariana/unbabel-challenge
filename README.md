@@ -23,16 +23,16 @@ The `maverage` command, linked to the function `process_events`, is executed in 
 
 In step 1, the input file is read one line at a time (empty ones are ignored) and only the `timestamp` and `duration` of **valid events** are added to the clean dataset. An event is _valid_ if it is of the type `translation_delivered` and if it contains the two properties mentioned above. It is assumed that, whenever present, these values are properly formatted.
 
-Moreover, the timestamps that are kept are not the ones receives as input.
+Moreover, the timestamps that are kept are not the ones received as input.
 In fact, unless an event happened at an exact minute (eg. `"2018-12-26 18:25:00.000000"`) its `timestamp` is rounded to the next one:
-`18:11:08.509654` -> `18:12:00.000000`
+`18:11:08.509654` -> `18:12:00.000000`.
 
 Next, the column `timestep` is added to the clean dataset. It contains the cumulative sum of the differences (in minutes) between each timestamp and the one that preceeds it.
 This information is useful in step 3.
 
 The function `enhance_data()` also ensures the support for multiple events in the same minute. It does so by aggregating the corresponding rows into a single one with: the same `timestamp`, the `timestep` of the oldest one, and the average `duration` for the events involved.
 
-Unsurprisingly, `moving_average()` computes the moving average for the `duration` field of the events received as input. I am considering that whenever no events were registered in a window, the `average_delivery_time` for the corresponding minute is `0`.
+Unsurprisingly, `moving_average()` computes the moving average for the `duration` field of the events received as input. I am considering that, whenever no events were registered in a window, the `average_delivery_time` for the corresponding minute is `0`.
 
 In addition, the moving average is always computed for the interval `[minT-1, maxT]`, even if a window size that is greater than the time range of the events received is provided. Here `minT` and `maxT` are the `timestamp` for the oldest and newest events respectively (after being processed in step 2, as mentioned above).
 
@@ -40,11 +40,14 @@ Finaly, the list with the resulting datapoints is written to the file `average_d
 
 # Build
 
-To build the CLI application run one of the following commands:
+
+To build the CLI application, first ensure you have `Python` and `pip` intalled, then run one of the following commands:
 
 	pip install --editable .
 
 	python -m pip install --editable .
+
+**Note:** You need to be on the root directory of this repo.
 
 To ensure the command succeeded, verify the creation of the directory `./maverage.egg-info/`.
 
@@ -128,6 +131,8 @@ Output to file `average_delivery_time.json`:
 3. ✔️
 4. ✔️ - Note that events occured over `2018-12-26` and `2018-12-27`.
 5. \-
+
+---
 
 #### Test 3
 
