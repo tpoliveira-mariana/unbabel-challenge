@@ -27,8 +27,8 @@ Moreover, the timestamps that are kept are not the ones receives as input.
 In fact, unless an event happened at an exact minute (eg. `"2018-12-26 18:25:00.000000"`) its `timestamp` is rounded to the next one:
 `18:11:08.509654` -> `18:12:00.000000`
 
-Next, the column `delta_ts` is added to the clean dataset. It contains the difference (in minutes) between each timestamp and the one that preceeds it.
-This information is of use step 3.
+Next, the column `timestep` is added to the clean dataset. It contains the cumulative sum of the differences (in minutes) between each timestamp and the one that preceeds it.
+This information is useful in step 3.
 
 Unsurprisingly, `moving_average()` computes the moving average for the `duration` field of the events received as input. I am considering that whenever no events were registered in a window, the `average_delivery_time` for the corresponding minute is `0`.
 

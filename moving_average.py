@@ -21,9 +21,9 @@ def get_clean_data(file : str):
         return pd.DataFrame(clean)
     
 def enhance_data(data : pd.DataFrame):
-    data['delta_ts'] = data['timestamp'].diff().dt.total_seconds() / 60 
-    data['delta_ts'].fillna(0, inplace=True)
-    data['delta_ts'] = data['delta_ts'].astype(int)
+    data['timestep'] = data['timestamp'].diff().dt.total_seconds() / 60 
+    data['timestep'].fillna(0, inplace=True)
+    data['timestep'] = data['timestep'].astype(int).cumsum()
 
 def build_result(prev_date : str, mean_duration : float):
 
@@ -33,7 +33,7 @@ def build_result(prev_date : str, mean_duration : float):
     return { 'date': str(next_date), 'average_delivery_time': round(mean_duration, ndigits)}
 
 def moving_average(data : pd.DataFrame, period : int):
-    steps = sum(data['delta_ts']) + 1
+    steps = data['timestep'].iloc[-1] + 1
     results = [
         {
             'date': str(data['timestamp'].iloc[0] - pd.Timedelta(minutes=1)), 
@@ -41,7 +41,7 @@ def moving_average(data : pd.DataFrame, period : int):
         }]
 
     # compute  moving average
-    moments = list(data['delta_ts'].cumsum())
+    moments = list(data['timestep'])
     lower = 0
     oldest_idx = 0
     to_avg = []
