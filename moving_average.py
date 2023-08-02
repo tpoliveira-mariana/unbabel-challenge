@@ -41,22 +41,22 @@ def moving_average(data : pd.DataFrame, period : int):
         }]
 
     # compute  moving average
+    moments = list(data['delta_ts'].cumsum())
     lower = 0
-    lowers = list(data['delta_ts'].cumsum()) # remove from to_avg
-    uppers = [] + lowers    # add to to_avg
+    oldest_idx = 0
     to_avg = []
     for upper in range(steps): 
-        if upper > period - 1:
+        if upper >= period:
             # window shifts at every time step after period
             lower += 1
-            if lower > lowers[0]:
-                # oldest event no longer in window
+            if lower > moments[oldest_idx]:
+                # first (aka oldest) event no longer in window
                 to_avg.pop(0)
-                lowers.pop(0)
+                oldest_idx += 1
             
-        if upper in uppers:
+        if upper in moments:
             # upper bound of window reached new event
-            to_avg.append(data['duration'].iloc[uppers.index(upper)])
+            to_avg.append(data['duration'].iloc[moments.index(upper)])
 
 
         # prevent cases with no registered events in window

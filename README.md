@@ -2,39 +2,15 @@
 
 Develop a simple command line application that parses a stream of events and produces an aggregated output (in the form of the `average_delivery_time.json` file). In this case, we're interested in calculating, for every minute, a moving average of the translation delivery time for the last X minutes.
 
-# Requirements
+# Solution Overview
 
-This project was done using:
+### Requirements
 
-	Python 3.11.4
-
-# Build
-
-To build the CLI application run one of the following commands:
-
-	pip install --editable .
-
-	python -m pip install --editable .
-
-To ensure the command succeeded, ensure the creation of the directory `./maverage.egg-info/`.
-
-# Run
-
-To test the `maverage` CLI application with the input file `./events/events.json` with a window size of `10`, run the command as follows:
-
-	maverage --input_file event/events.json --window_size 10
-
-# Test
-
-# Program Overview
-
-### Packages
-
-In this project, the following Python packages are used:
+This project was implemented using `Python 3.11.4` and the following Python packages:
 
 + Click - To define the command and its options;
 + json - To read the events from the input file;
-+ Pandas - To easily save, clean, and process the events. 
++ Pandas - To easily save, clean, and process the events.
 
 ### Logic
 
@@ -56,6 +32,24 @@ This information is of use step 3.
 
 Unsurprisingly, `moving_average()` computes the moving average for the `duration` field of the events received as input. I am considering that whenever no events were registered in a window, the `average_delivery_time` for the corresponding minute is `0`.
 
-In addition, the moving average is always computed up to the minute of the last event, even if a window size that is greater than time range of the events received is provided.
+In addition, the moving average is always computed for the interval `[minT-1, maxT]`, even if a window size that is greater than the time range of the events received is provided. Here `minT` and `maxT` are the `timestamp` for the oldest and newest events respectively (after being processed in step 2, as mentioned above).
 
 Finaly, the list with the resulting datapoints is written to the file `average_delivery_time.json`.
+
+# Build
+
+To build the CLI application run one of the following commands:
+
+	pip install --editable .
+
+	python -m pip install --editable .
+
+To ensure the command succeeded, verify the creation of the directory `./maverage.egg-info/`.
+
+# Run
+
+To run the `maverage` CLI application with the input file `./events/events.json` with a window size of `10`, run the command as follows:
+
+	maverage --input_file event/events.json --window_size 10
+
+# Test
